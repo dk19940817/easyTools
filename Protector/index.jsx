@@ -1,6 +1,6 @@
 import { Component } from 'react';
 // https://reactjs.org/blog/2017/07/26/error-handling-in-react-16.html
-class EasyToolsProtector extends Component {
+class Protector extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
@@ -25,4 +25,5 @@ class EasyToolsProtector extends Component {
 		return ready ? children : null;
 	}
 }
-export default EasyToolsProtector;
+
+export default Protector;

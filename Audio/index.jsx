@@ -2,44 +2,10 @@ import React, { PureComponent } from 'react';
 import ReactPlayer from 'react-player';
 // npm: react-player API:https://www.npmjs.com/package/react-player#adding-custom-players
 import EventEmitter from 'events';
-import { timeConvert } from '../../utils/time';
-import { getOsInfo, OS_TYPE } from '../../utils/ostype';
+import { timeConvert } from '../utils/time';
+import { getOsInfo, OS_TYPE } from '../utils/ostype';
 import { Loader } from '../index';
 import style from './audio.css';
-
-/*
-基于react-player封装的精简版音频播放器，自由搭配，开箱即用
-
-支持播放、缓冲等状态获取、可拖拽进度条、自定义样式、独占播放等
-
-自定义样式通过参数获取各个信息，如下调用：
-
-const audioData = {
-  head: '',
-  intro: '歌名',
-* playurl: '', 
-  duration: 248,
-}
-
-<Audio {...audioDate}>
-  {
-    ({
-      onPlay, // fn 可传参布尔值控制播放暂停 onPlay(true)或onPlay(false) onPlay()为自动转换状态 
-      playing, // Boolean 播放状态
-      buffer, // Boolean 是否缓冲中
-      currentTime, // Num/string 已播放时间
-      backgroundsize, // Num/string 播放进度百分比
-    }) => (<div>...</div>)
-  }
-</Audio>
-
-或
-
-<Audio {...audioDate} />
-直接使用默认样式
-
-...
-*/
 
 const audioEmitter = new EventEmitter().setMaxListeners(100);
 
@@ -64,10 +30,10 @@ export default class Audio extends PureComponent {
         Math.random() * Number.MAX_SAFE_INTEGER,
         10,
       )}`;
-      audioEmitter.on('@audioplaying', this.onOtherPlay);
+      audioEmitter.on('@audioplaying', this.onPause);
     }
     componentWillUnmount() {
-      audioEmitter.removeListener('@audioplaying', this.onOtherPlay);
+      audioEmitter.removeListener('@audioplaying', this.onPause);
     }
     // 实时获取音频各信息状态
     onProgress = e => {
@@ -94,12 +60,15 @@ export default class Audio extends PureComponent {
         this.player.seekTo(`${parseFloat(e.target.value) * duration / 100}`);
       }
     }
-    onOtherPlay = elmId => {
+    onPause = elmId => {
       if (this.elmId !== elmId && this.state.playing) {
         this.setState({ playing: false });
       }
     }
-    playPause(b) {
+    onPlay(b) {
+      if (typeof this.props.onPlay === 'function') {
+        this.props.onPlay()
+      }
       let playing = typeof b === 'boolean' ? b : !this.state.playing;
       this.setState({ playing }, () => {
         if (this.state.playing) {
@@ -142,7 +111,7 @@ export default class Audio extends PureComponent {
           {
             children ?
               children({
-                onPlay: b => this.playPause(b),
+                onPlay: b => this.onPlay(b),
                 playing,
                 buffer,
                 currentTime,
@@ -152,7 +121,7 @@ export default class Audio extends PureComponent {
               <div className={style.player}>
                 {/* 播放暂停按钮 */}
                 <div className={style.controls}>
-                  <div className={style.play} onClick={() => this.playPause()}>
+                  <div className={style.play} onClick={() => this.onPlay()}>
                     {
                       playing ?
                         <div>
@@ -172,7 +141,7 @@ export default class Audio extends PureComponent {
                             :
                             <img
                               src="//mat1.gtimg.com/www/images/wise/icon_zanting.png"
-                              alt=""
+                              alt="暂停"
                               className={style.icon_play}
                             />
                           }
@@ -180,7 +149,7 @@ export default class Audio extends PureComponent {
                         :
                         <img
                           src="//mat1.gtimg.com/www/images/wise/icon_bofang.png"
-                          alt=""
+                          alt="播放"
                           className={style.icon_play}
                         />
                     }
@@ -191,7 +160,7 @@ export default class Audio extends PureComponent {
                   <div className={style.progress}>
                     {
                       head &&
-                      <img src={head} className={playing && !buffer ? style.rotate : ''} alt="" />
+                      <img src={head} className={playing && !buffer ? style.rotate : ''} alt="头像" />
                     }
                     {
                       intro &&
@@ -221,7 +190,6 @@ export default class Audio extends PureComponent {
               </div>
           }
           {/* 播放器  */}
-          {/* npm: react-player API:https://www.npmjs.com/package/react-player#adding-custom-players */}
           <ReactPlayer
             url={playurl}
             width="0"
